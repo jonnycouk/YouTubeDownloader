@@ -86,7 +86,9 @@ namespace YouTubeDownloader.Ui
         private void MainForm_Load(object sender, EventArgs e)
         {
             CheckDownloadLocation();
+            _downloadLocation = Settings.Get("DownloadFolder");
+            
+            txtDownloadLocation.Text = _downloadLocation;
         }
-
     }
 }
