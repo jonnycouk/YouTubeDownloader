@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using MediaToolkit;
 using MediaToolkit.Model;
 using VideoLibrary;
@@ -23,37 +24,50 @@ namespace YouTubeDownloader.Ui
 
         private void DownloadVideo()
         {
-            if (!string.IsNullOrEmpty(txtUrl.Text))
+            try
             {
-                CheckDownloadLocation();
-
-                string link = txtUrl.Text.Trim();
-                var youTube = YouTube.Default;
-                var video = youTube.GetVideo(link);
-
-                File.WriteAllBytes($"{_downloadLocation}\\{video.FullName}", video.GetBytes());
-
-                _lastDownload = $"{_downloadLocation}\\{video.FullName}";
-
-                if (chkOpenFolderAfterDownload.Checked)
-                    Open(_downloadLocation);
-
-                if (chkPlayAfterDownload.Checked)
-                    Open(_lastDownload);
-
-                if (chkExtractAudioAfterDownload.Checked)
+                if (!string.IsNullOrEmpty(txtUrl.Text))
                 {
-                    var inputFile = new MediaFile { Filename = $"{_downloadLocation}\\{video.FullName}" };
-                    var outputFile = new MediaFile { Filename = $"{_downloadLocation}\\{video.FullName}.mp3" };
+                    CheckDownloadLocation();
 
-                    using (var engine = new Engine())
+                    string link = txtUrl.Text.Trim();
+                    var youTube = YouTube.Default;                    
+                    var video = youTube.GetVideo(GetVideoUrlOnly(link));
+
+                    File.WriteAllBytes($"{_downloadLocation}\\{video.FullName}", video.GetBytes());
+
+                    _lastDownload = $"{_downloadLocation}\\{video.FullName}";
+
+                    if (chkOpenFolderAfterDownload.Checked)
+                        Open(_downloadLocation);
+
+                    if (chkPlayAfterDownload.Checked)
+                        Open(_lastDownload);
+
+                    if (chkExtractAudioAfterDownload.Checked)
                     {
-                        engine.GetMetadata(inputFile);
-                        engine.Convert(inputFile, outputFile);
-                    }
+                        var inputFile = new MediaFile { Filename = $"{_downloadLocation}\\{video.FullName}" };
 
+                        var outputFile = new MediaFile { Filename = $"{_downloadLocation}\\{video.FullName}".Replace(".mp4", ".mp3") };
+
+                        using (var engine = new Engine())
+                        {
+                            engine.GetMetadata(inputFile);
+                            engine.Convert(inputFile, outputFile);
+                        }
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                MessageBox.Show("An unexpected error occured when attempting to download requested media.\r\n\r\nError details:\r\n\r\n" + e.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string GetVideoUrlOnly(string url)
+        {
+            string[] elements = url.Split('&');
+            return elements[0];
         }
 
         private void CheckDownloadLocation()
